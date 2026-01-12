@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Classifier - Data Mining Project</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-brain"></i> Text Classifier</h1>
+            <p class="subtitle">Clasificare documente folosind Naive Bayes, SVM și Random Forest</p>
+            <nav>
+                <a href="/" class="nav-link active"><i class="fas fa-home"></i> Clasificare</a>
+                <a href="/details" class="nav-link"><i class="fas fa-info-circle"></i> Detalii</a>
+            </nav>
+        </header>
+
+        <div class="main-content">
+            <!-- Input Section -->
+            <div class="input-section">
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('text')">
+                        <i class="fas fa-keyboard"></i> Text
+                    </button>
+                    <button class="tab-btn" onclick="switchTab('file')">
+                        <i class="fas fa-file-upload"></i> Fișier
+                    </button>
+                </div>
+
+                <!-- Text Input -->
+                <div id="text-tab" class="tab-content active">
+                    <textarea 
+                        id="text-input" 
+                        placeholder="Introdu textul aici sau încarcă un fișier..."
+                        rows="8"
+                    ></textarea>
+                    <button class="predict-btn" onclick="predictFromText()">
+                        <i class="fas fa-search"></i> Clasifică Text
+                    </button>
+                </div>
+
+                <!-- File Input -->
+                <div id="file-tab" class="tab-content">
+                    <div class="file-upload-area" id="file-upload-area">
+                        <input type="file" id="file-input" accept=".txt,.csv,.json,.pdf" onchange="handleFileSelect(event)">
+                        <label for="file-input" class="file-label">
+                            <i class="fas fa-cloud-upload-alt file-icon"></i>
+                            <span class="file-text">Click pentru a selecta un fișier sau trage-l aici</span>
+                            <span class="file-types">(TXT, CSV, JSON, PDF)</span>
+                        </label>
+                    </div>
+                    <div id="file-info" class="file-info hidden"></div>
+                    <button class="predict-btn" id="file-predict-btn" onclick="predictFromFile()" disabled>
+                        <i class="fas fa-search"></i> Clasifică Fișier
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="results-section" class="results-section hidden">
+                <h2><i class="fas fa-chart-line"></i> Rezultate</h2>
+                
+                <div class="text-preview" id="text-preview"></div>
+
+                <div class="algorithms-grid">
+                    <!-- Naive Bayes -->
+                    <div class="algorithm-card" id="nb-card">
+                        <div class="algorithm-header">
+                            <h3><i class="fas fa-chart-bar"></i> Naive Bayes</h3>
+                        </div>
+                        <div class="prediction-result">
+                            <div class="prediction-label">Categorie:</div>
+                            <div class="prediction-value" id="nb-prediction">-</div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" id="nb-confidence" style="width: 0%"></div>
+                            </div>
+                            <div class="confidence-text" id="nb-confidence-text">0%</div>
+                        </div>
+                        <div class="probabilities" id="nb-probabilities"></div>
+                    </div>
+
+                    <!-- SVM -->
+                    <div class="algorithm-card" id="svm-card">
+                        <div class="algorithm-header">
+                            <h3><i class="fas fa-project-diagram"></i> SVM</h3>
+                        </div>
+                        <div class="prediction-result">
+                            <div class="prediction-label">Categorie:</div>
+                            <div class="prediction-value" id="svm-prediction">-</div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" id="svm-confidence" style="width: 0%"></div>
+                            </div>
+                            <div class="confidence-text" id="svm-confidence-text">0%</div>
+                        </div>
+                        <div class="probabilities" id="svm-probabilities"></div>
+                    </div>
+
+                    <!-- Random Forest -->
+                    <div class="algorithm-card" id="rf-card">
+                        <div class="algorithm-header">
+                            <h3><i class="fas fa-tree"></i> Random Forest</h3>
+                        </div>
+                        <div class="prediction-result">
+                            <div class="prediction-label">Categorie:</div>
+                            <div class="prediction-value" id="rf-prediction">-</div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" id="rf-confidence" style="width: 0%"></div>
+                            </div>
+                            <div class="confidence-text" id="rf-confidence-text">0%</div>
+                        </div>
+                        <div class="probabilities" id="rf-probabilities"></div>
+                    </div>
+                </div>
+
+                <div class="comparison-section">
+                    <h3><i class="fas fa-balance-scale"></i> Comparație Algoritmi</h3>
+                    <div class="comparison-table" id="comparison-table"></div>
+                </div>
+
+                <!-- Performance Metrics Section -->
+                <div class="performance-section">
+                    <h3><i class="fas fa-tachometer-alt"></i> Metrici de Performanță</h3>
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <i class="fas fa-cog metric-icon"></i>
+                            <div class="metric-label">Timp Preprocesare</div>
+                            <div class="metric-value" id="preprocessing-time">-</div>
+                        </div>
+                        <div class="metric-card">
+                            <i class="fas fa-vector-square metric-icon"></i>
+                            <div class="metric-label">Timp Vectorizare</div>
+                            <div class="metric-value" id="vectorization-time">-</div>
+                        </div>
+                        <div class="metric-card">
+                            <i class="fas fa-stopwatch metric-icon"></i>
+                            <div class="metric-label">Timp Total</div>
+                            <div class="metric-value" id="total-time">-</div>
+                        </div>
+                        <div class="metric-card">
+                            <i class="fas fa-ruler metric-icon"></i>
+                            <div class="metric-label">Lungime Text</div>
+                            <div class="metric-value" id="text-length">-</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-section">
+                    <h3><i class="fas fa-chart-pie"></i> Grafice Comparație</h3>
+                    <div class="charts-grid">
+                        <div class="chart-container">
+                            <h4><i class="fas fa-bolt"></i> Viteza de Predicție (ms)</h4>
+                            <canvas id="speed-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h4><i class="fas fa-shield-alt"></i> Nivel de Încredere (%)</h4>
+                            <canvas id="confidence-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h4><i class="fas fa-percentage"></i> Distribuție Probabilități</h4>
+                            <canvas id="probabilities-chart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <h4><i class="fas fa-radar"></i> Comparație Generală</h4>
+                            <canvas id="comparison-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Stats -->
+                <div class="stats-section">
+                    <h3><i class="fas fa-list-alt"></i> Statistici Detaliate</h3>
+                    <div class="stats-grid" id="detailed-stats"></div>
+                </div>
+            </div>
+
+            <!-- Loading -->
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Procesare în curs...</p>
+            </div>
+
+            <!-- Error -->
+            <div id="error" class="error hidden"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

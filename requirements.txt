@@ -1,0 +1,8 @@
+# Task Manager - Requirements
+# Acest proiect folosește doar biblioteci standard Python
+# Nu sunt necesare dependențe externe
+
+# Dacă dorești să adaugi funcționalități suplimentare, poți adăuga:
+# colorama==0.4.6  # pentru culori în terminal
+# click==8.1.7     # pentru CLI mai avansat
+
