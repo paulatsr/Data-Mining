@@ -2,6 +2,211 @@ let currentFile = null;
 let fileText = '';
 let charts = {}; // Store chart instances
 
+// History management
+function saveToHistory(data) {
+    // Skip if loading from history
+    if (data._fromHistory) return;
+    
+    const history = getHistory();
+    const historyItem = {
+        id: Date.now(),
+        timestamp: new Date().toLocaleString('ro-RO'),
+        text: data.text || data.text_preview || 'Text input',
+        textLength: data.text_length || 0,
+        processedTextLength: data.processed_text_length || 0,
+        results: data.results,
+        performance: data.performance,
+        categoryNames: data.category_names,
+        // Extract detailed metrics for easy comparison
+        metrics: {
+            naive_bayes: {
+                prediction: data.results.naive_bayes.prediction,
+                confidence: data.results.naive_bayes.confidence,
+                predictionTime: data.results.naive_bayes.prediction_time_ms,
+                probabilities: data.results.naive_bayes.probabilities
+            },
+            svm: {
+                prediction: data.results.svm.prediction,
+                confidence: data.results.svm.confidence,
+                predictionTime: data.results.svm.prediction_time_ms,
+                probabilities: data.results.svm.probabilities
+            },
+            random_forest: {
+                prediction: data.results.random_forest.prediction,
+                confidence: data.results.random_forest.confidence,
+                predictionTime: data.results.random_forest.prediction_time_ms,
+                probabilities: data.results.random_forest.probabilities
+            }
+        },
+        performanceMetrics: {
+            preprocessingTime: data.performance.preprocessing_time,
+            vectorizationTime: data.performance.vectorization_time,
+            totalTime: data.performance.total_time
+        }
+    };
+    
+    history.unshift(historyItem); // Add to beginning
+    // Keep only last 50 items
+    if (history.length > 50) {
+        history.pop();
+    }
+    
+    localStorage.setItem('classification_history', JSON.stringify(history));
+    loadHistory();
+}
+
+function getHistory() {
+    const historyStr = localStorage.getItem('classification_history');
+    return historyStr ? JSON.parse(historyStr) : [];
+}
+
+function loadHistory() {
+    const history = getHistory();
+    const historyList = document.getElementById('history-list');
+    
+    if (history.length === 0) {
+        historyList.innerHTML = '<p class="no-history">Nu există istoric. Clasifică un document pentru a începe.</p>';
+        return;
+    }
+    
+    historyList.innerHTML = history.map(item => {
+        const metrics = item.metrics || {
+            naive_bayes: item.results.naive_bayes,
+            svm: item.results.svm,
+            random_forest: item.results.random_forest
+        };
+        
+        // Get top 3 probabilities for each algorithm
+        const getTopProbs = (probs) => {
+            return Object.entries(probs || {})
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 3)
+                .map(([cat, prob]) => `${cat}: ${(prob * 100).toFixed(1)}%`)
+                .join(', ');
+        };
+        
+        // Check if algorithms agree
+        const predictions = [
+            metrics.naive_bayes.prediction,
+            metrics.svm.prediction,
+            metrics.random_forest.prediction
+        ];
+        const allAgree = predictions[0] === predictions[1] && predictions[1] === predictions[2];
+        const twoAgree = predictions.filter(p => p === predictions[0]).length === 2 || 
+                         predictions.filter(p => p === predictions[1]).length === 2;
+        
+        return `
+        <div class="history-item" onclick="showHistoryItem(${item.id})">
+            <div class="history-item-header">
+                <span class="history-timestamp"><i class="fas fa-clock"></i> ${item.timestamp}</span>
+                <div class="history-badges">
+                    ${allAgree ? '<span class="history-badge badge-agree"><i class="fas fa-check-circle"></i> Acord total</span>' : ''}
+                    ${twoAgree && !allAgree ? '<span class="history-badge badge-partial"><i class="fas fa-exclamation-circle"></i> Acord parțial</span>' : ''}
+                    ${!allAgree && !twoAgree ? '<span class="history-badge badge-disagree"><i class="fas fa-times-circle"></i> Discrepanțe</span>' : ''}
+                </div>
+                <button class="delete-history-btn" onclick="deleteHistoryItem(${item.id}, event)" title="Șterge">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="history-item-preview">
+                <div class="history-text-preview">
+                    <strong>Text:</strong> ${item.text.substring(0, 150)}${item.text.length > 150 ? '...' : ''}
+                    <span class="history-text-length">(${item.textLength || 0} caractere, ${item.processedTextLength || 0} cuvinte)</span>
+                </div>
+                
+                <div class="history-comparison-table">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Algoritm</th>
+                                <th>Categorie</th>
+                                <th>Încredere</th>
+                                <th>Timp (ms)</th>
+                                <th>Top 3 Probabilități</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Naive Bayes</strong></td>
+                                <td>${metrics.naive_bayes.prediction}</td>
+                                <td>${(metrics.naive_bayes.confidence * 100).toFixed(2)}%</td>
+                                <td>${metrics.naive_bayes.predictionTime?.toFixed(3) || (item.results?.naive_bayes?.prediction_time_ms?.toFixed(3) || '-')}</td>
+                                <td class="history-probs">${getTopProbs(metrics.naive_bayes.probabilities || item.results?.naive_bayes?.probabilities || {})}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>SVM</strong></td>
+                                <td>${metrics.svm.prediction}</td>
+                                <td>${(metrics.svm.confidence * 100).toFixed(2)}%</td>
+                                <td>${metrics.svm.predictionTime?.toFixed(3) || (item.results?.svm?.prediction_time_ms?.toFixed(3) || '-')}</td>
+                                <td class="history-probs">${getTopProbs(metrics.svm.probabilities || item.results?.svm?.probabilities || {})}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Random Forest</strong></td>
+                                <td>${metrics.random_forest.prediction}</td>
+                                <td>${(metrics.random_forest.confidence * 100).toFixed(2)}%</td>
+                                <td>${metrics.random_forest.predictionTime?.toFixed(3) || (item.results?.random_forest?.prediction_time_ms?.toFixed(3) || '-')}</td>
+                                <td class="history-probs">${getTopProbs(metrics.random_forest.probabilities || item.results?.random_forest?.probabilities || {})}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                ${item.performanceMetrics ? `
+                <div class="history-performance">
+                    <strong>Performanță:</strong>
+                    <span>Preprocesare: ${(item.performanceMetrics.preprocessingTime * 1000).toFixed(3)}ms</span>
+                    <span>Vectorizare: ${(item.performanceMetrics.vectorizationTime * 1000).toFixed(3)}ms</span>
+                    <span>Total: ${(item.performanceMetrics.totalTime * 1000).toFixed(3)}ms</span>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+    `;
+    }).join('');
+}
+
+function showHistoryItem(id) {
+    const history = getHistory();
+    const item = history.find(h => h.id === id);
+    
+    if (!item) return;
+    
+    // Create a data object similar to API response
+    const data = {
+        text: item.text,
+        text_length: item.textLength,
+        results: item.results,
+        performance: item.performance,
+        category_names: item.categoryNames,
+        _fromHistory: true  // Flag to prevent saving to history again
+    };
+    
+    displayResults(data);
+    
+    // Scroll to results
+    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+}
+
+function deleteHistoryItem(id, event) {
+    event.stopPropagation();
+    const history = getHistory();
+    const filtered = history.filter(h => h.id !== id);
+    localStorage.setItem('classification_history', JSON.stringify(filtered));
+    loadHistory();
+}
+
+function clearHistory() {
+    if (confirm('Ești sigur că vrei să ștergi tot istoricul?')) {
+        localStorage.removeItem('classification_history');
+        loadHistory();
+    }
+}
+
+// Load history on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadHistory();
+});
+
 // Switch tabs
 function switchTab(tab) {
     // Update buttons
@@ -106,6 +311,10 @@ async function makePrediction(text) {
             throw new Error(data.error || 'Eroare la predicție');
         }
         
+        // Add text preview for history
+        data.text = text.substring(0, 500) + (text.length > 500 ? '...' : '');
+        data.text_preview = text.substring(0, 500) + (text.length > 500 ? '...' : '');
+        
         displayResults(data);
     } catch (error) {
         showError(error.message);
@@ -131,6 +340,11 @@ function displayResults(data) {
     const results = data.results;
     const categoryNames = data.category_names || [];
     const performance = data.performance || {};
+    
+    // Save to history (only if not loading from history)
+    if (!data._fromHistory) {
+        saveToHistory(data);
+    }
     
     // Display results for each algorithm
     displayAlgorithmResult('naive_bayes', 'nb', results.naive_bayes, categoryNames);
