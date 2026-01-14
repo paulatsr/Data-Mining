@@ -4,12 +4,8 @@
 
 ### Problema aleasa: Clasificare Automata a Documentelor Text
 
-Am ales sa rezolvam problema de **clasificare automata a documentelor text** in categorii predefinite. Aceasta este o problema fundamentala in data mining si machine learning, cu aplicatii practice importante:
+Am ales sa rezolvam problema de **clasificare automata a documentelor text** in categorii predefinite. Aceasta este o problema fundamentala in data mining si machine learning, cu aplicatii practice importante.
 
-- **Filtrare email**: Clasificare spam vs non-spam
-- **Organizare documente**: Categorizare automata a articolelor
-- **Analiza sentiment**: Clasificare pozitiv/negativ
-- **Sisteme de recomandare**: Categorizare continut pentru recomandari
 
 ### De ce aceasta problema?
 
@@ -178,8 +174,6 @@ class SVMClassifier:
 
 **Dezavantaje:**
 - Lent la antrenare (complexitate O(n²) sau O(n³))
-- Nu scaleaza bine pe dataset-uri foarte mari
-- Interpretabilitate limitata
 
 ---
 
@@ -416,45 +410,13 @@ Pentru a testa algoritmii pe scenarii reale, am creat 3 articole de test cu cara
 
 **Continut:** Articol despre un meci de hockey intre Montreal Canadiens si Toronto Maple Leafs, cu detalii specifice sportului.
 
-**Caracteristici:**
-- Categorie foarte clara si unica
-- Cuvinte specifice: "hockey", "goaltender", "slap shot", "power play", "face-offs", "Canadiens", "Maple Leafs"
-- Context sportiv evident si neambiguu
+| Algoritm | Categorie Prezisa | Incredere | Timp Predicție (ms) | Observatii |
+|----------|-------------------|-----------|---------------------|------------|
+| **Naive Bayes** | Sport - Hockey | **99.74%** | 7.862 | Cea mai buna incredere reala, viteza excelenta |
+| **SVM** | Sport - Hockey | 100.00% | 25.386 | Predictie corecta, viteza medie |
+| **Random Forest** | Sport - Hockey | 97.00% | 64.449 | Predictie corecta, probabilitati reale |
 
-**Rezultate Obtinute:**
-
-| Algoritm | Categorie Prezisa | Incredere | Timp Predicție (ms) | Top 3 Probabilitati |
-|----------|-------------------|-----------|---------------------|---------------------|
-| **Naive Bayes** | Sport - Hockey | **99.74%** | 7.862 | Sport - Hockey: 99.7%, Politica - Orientul Mijlociu: 0.1%, Stiinta - Spatiu: 0.1% |
-| **SVM** | Sport - Hockey | 100.00% | 25.386 | Sport - Hockey: 100.0% |
-| **Random Forest** | Sport - Hockey | 97.00% | 64.449 | Sport - Hockey: 97.0%, Stiinta - Medicina: 1.0%, Stiinta - Spatiu: 1.0% |
-
-**Analiza Rezultatelor:**
-
-✅ **Acord total** - Toti cei 3 algoritmi au identificat corect categoria: **Sport - Hockey**
-
-**Observatii importante:**
-
-1. **Naive Bayes - Cea mai buna incredere reala (99.74%)**:
-   - Calculeaza probabilitati reale bazate pe frecventa cuvintelor
-   - Cuvintele specifice hockey ("goaltender", "slap shot", "power play") au frecventa mare in categoria sport
-   - Probabilitatile pentru alte categorii sunt neglijabile (0.1%)
-
-2. **SVM - 100% incredere (placeholder)**:
-   - Nu calculeaza probabilitati reale (vezi sectiunea 5.4)
-   - Predictia este corecta: Sport - Hockey
-   - Cel mai lent la predictie (25.386ms)
-
-3. **Random Forest - 97% incredere**:
-   - Probabilitati reale, dar putin mai scazute decat Naive Bayes
-   - Cel mai lent algoritm (64.449ms)
-   - Distributie mica pentru alte categorii (1% fiecare)
-
-**Concluzie Articol 1:**
-- Pentru articole cu categorie clara, **toti algoritmii functioneaza excelent**
-- Naive Bayes ofera cea mai buna incredere reala si cea mai rapida viteza
-- Cuvintele specifice fac clasificarea usoara pentru toate algoritmii
-- Nu exista ambiguitate - algoritmii sunt de acord
+**Rezumat:** Toti cei 3 algoritmi au identificat corect categoria **Sport - Hockey**. Pentru articole cu categorie clara, algoritmii functioneaza excelent si sunt de acord.
 
 ---
 
@@ -462,152 +424,27 @@ Pentru a testa algoritmii pe scenarii reale, am creat 3 articole de test cu cara
 
 **Continut:** Articol care discuta despre cum tehnologia spatiala contribuie la progrese medicale, mentionand si aplicatii in industria auto.
 
-**Caracteristici:**
-- Mentioneaza multiple categorii: Stiinta - Spatiu, Stiinta - Medicina, Tehnologie
-- Context complex cu intersectii intre domenii
-- Cuvinte din mai multe categorii in mod echilibrat
+| Algoritm | Categorie Prezisa | Incredere | Timp Predicție (ms) | Observatii |
+|----------|-------------------|-----------|---------------------|------------|
+| **Naive Bayes** | Stiinta - Spatiu | **77.12%** | 1.969 | Identifica spatiu bazat pe combinatii clare de cuvinte |
+| **SVM** | Stiinta - Spatiu | 100.00% | 4.624 | Identifica pattern-uri care indica spatiu ca fiind dominanta |
+| **Random Forest** | Stiinta - Medicina | 53.00% | 42.783 | Identifica medicina ca tema centrala bazat pe context |
 
-**Rezultate Obtinute:**
-
-| Algoritm | Categorie Prezisa | Incredere | Timp Predicție (ms) | Top 3 Probabilitati |
-|----------|-------------------|-----------|---------------------|---------------------|
-| **Naive Bayes** | Stiinta - Spatiu | **77.12%** | 1.969 | Stiinta - Spatiu: 77.1%, Stiinta - Medicina: 18.2%, Tehnologie - Grafica: 2.8% |
-| **SVM** | Stiinta - Spatiu | 100.00% | 4.624 | Stiinta - Spatiu: 100.0% |
-| **Random Forest** | Stiinta - Medicina | 53.00% | 42.783 | Stiinta - Medicina: 53.0%, Stiinta - Spatiu: 31.0%, Tehnologie - Grafica: 10.0% |
-
-**Analiza Rezultatelor:**
-
-⚠️ **Acord partial** - Naive Bayes si SVM: Stiinta - Spatiu | Random Forest: Stiinta - Medicina
-
-**De ce Naive Bayes si SVM au dat "Stiinta - Spatiu"?**
-
-Articolul mentioneaza:
-- **Cuvinte despre spatiu**: "space technology", "space exploration", "International Space Station", "space missions", "space stations"
-- **Cuvinte despre medicina**: "medical breakthroughs", "medical treatment", "patients", "disease", "healthcare"
-- **Cuvinte despre tehnologie**: "technology", "imaging technology", "diagnostic tools"
-
-**Naive Bayes (77.12% incredere)**:
-- Cuvintele despre spatiu apar in **combinatii clare si distincte**: "space technology", "space exploration", "space stations"
-- Aceste combinatii au frecventa mai mare in categoria "sci.space" din training data
-- Medicina apare, dar cuvintele sunt mai generale si distribuite
-- Probabilitatea pentru medicina este semnificativa (18.2%), dar mai mica decat spatiul
-
-**SVM (100% incredere - placeholder)**:
-- Identifica pattern-uri care indica spatiu ca fiind categoria dominanta
-- Cuvintele despre spatiu formeaza un pattern mai clar si mai distinct
-- Predictia este corecta, dar increderea de 100% este doar un placeholder
-
-**De ce Random Forest a dat "Stiinta - Medicina" (53% incredere)?**
-
-**Random Forest (53% incredere - cea mai scazuta)**:
-- Analizeaza interactiuni complexe intre cuvinte
-- Identifica ca medicina este tema centrala a articolului ("medical breakthroughs", "healthcare", "patients")
-- Distributia probabilitatilor arata incertitudine: 53% medicina, 31% spatiu, 10% tehnologie
-- **Increderea scazuta (53%) indica ambiguitate** - algoritmul nu este sigur
-- Random Forest identifica contextul medical ca fiind mai prezent in intregul text
-
-**Observatii importante:**
-
-1. **Incredere scazuta pentru toate algoritmii**:
-   - Naive Bayes: 77.12% (mai scazut decat articolul 1 cu 99.74%)
-   - Random Forest: 53% (foarte scazut, indica ambiguitate)
-   - Acest lucru confirma ca articolul este ambiguu
-
-2. **Discrepanta intre algoritmi**:
-   - Naive Bayes si SVM: Spatiu (bazat pe frecventa si pattern-uri clare)
-   - Random Forest: Medicina (bazat pe context si tema centrala)
-
-3. **Distributia probabilitatilor**:
-   - Naive Bayes: 77.1% spatiu, 18.2% medicina - spatiu este clar dominanta
-   - Random Forest: 53% medicina, 31% spatiu - distributie mai echilibrata, indica ambiguitate
-
-**Concluzie Articol 2:**
-- Articolul este ambiguu - mentioneaza multiple categorii in mod echilibrat
-- Algoritmii dau rezultate diferite bazate pe abordarea lor
-- **Increderea scazuta** confirma ambiguitatea articolului
-- Naive Bayes si SVM identifica spatiu ca fiind categoria cu pattern-uri mai clare
-- Random Forest identifica medicina ca fiind tema centrala, dar cu incredere scazuta
+**Rezumat:** Articolul mentioneaza multiple categorii. Naive Bayes si SVM identifica spatiu (bazat pe pattern-uri clare), iar Random Forest identifica medicina (bazat pe tema centrala). Algoritmii dau rezultate diferite bazate pe abordarea lor.
 
 ---
 
 #### Articol 3: Povestioara cu Toate Categoriile
 
-**Continut:** Povestioara care mentioneaza in mod egal toate categoriile: tehnologie (graphics card), medicina (Dr. Martinez, medical center), sport (hockey game), spatiu (space exploration), auto (car maintenance), politica (Middle East politics).
+**Continut:** Povestioara care mentioneaza in mod egal toate categoriile: tehnologie, medicina, sport, spatiu, auto, politica.
 
-**Caracteristici:**
-- Distributie echilibrata a cuvintelor din toate categoriile
-- Context narativ care mentioneaza multiple domenii
-- Categoria nu este clara - toate categoriile sunt mentionate
+| Algoritm | Categorie Prezisa | Incredere | Timp Predicție (ms) | Observatii |
+|----------|-------------------|-----------|---------------------|------------|
+| **Naive Bayes** | Stiinta - Spatiu | **47.06%** | 3.437 | Se bazeaza pe claritatea combinatiilor de cuvinte |
+| **SVM** | Stiinta - Medicina | 100.00% | 17.469 | Identifica medicina ca tema centrala a povestii |
+| **Random Forest** | Stiinta - Medicina | 32.00% | 30.247 | Analizeaza contextul si identifica medicina ca tema centrala |
 
-**Rezultate Obtinute:**
-
-| Algoritm | Categorie Prezisa | Incredere | Timp Predicție (ms) | Top 3 Probabilitati |
-|----------|-------------------|-----------|---------------------|---------------------|
-| **Naive Bayes** | Stiinta - Spatiu | **47.06%** | 3.437 | Stiinta - Spatiu: 47.1%, Stiinta - Medicina: 34.0%, Tehnologie - Grafica: 9.9% |
-| **SVM** | Stiinta - Medicina | 100.00% | 17.469 | Stiinta - Medicina: 100.0% |
-| **Random Forest** | Stiinta - Medicina | 32.00% | 30.247 | Stiinta - Medicina: 32.0%, Sport - Hockey: 23.0%, Tehnologie - Grafica: 21.0% |
-
-**Analiza Rezultatelor:**
-
-⚠️ **Acord partial** - Naive Bayes: Stiinta - Spatiu | SVM si Random Forest: Stiinta - Medicina
-
-**De ce Naive Bayes a dat "Stiinta - Spatiu" (47.06% incredere - foarte scazuta)?**
-
-Articolul mentioneaza:
-- **Cuvinte despre spatiu (4 apariții clare)**: "space exploration", "space stations", "space science", "space missions"
-- **Cuvinte despre medicina (10+ apariții)**: "medical center", "medical imaging", "patient scans", "X-ray", "disease detection", "treatments", "patients", "Dr. Martinez", "hospital"
-- **Cuvinte despre alte categorii**: "hockey game", "graphics card", "car", "politics"
-
-**Naive Bayes (47.06% incredere - cea mai scazuta)**:
-- Cuvintele despre spatiu apar in **combinatii foarte clare si distincte**: "space exploration", "space stations", "space science"
-- Aceste combinatii au probabilitate mare in categoria "sci.space" din training data
-- Desi medicina apare mai des, cuvintele sunt mai generale si distribuite
-- **Increderea scazuta (47.06%) indica ambiguitate extrema**
-- Distributia probabilitatilor: 47.1% spatiu, 34.0% medicina, 9.9% tehnologie - **foarte echilibrata**
-
-**De ce SVM si Random Forest au dat "Stiinta - Medicina"?**
-
-**SVM (100% incredere - placeholder)**:
-- Identifica medicina ca fiind tema centrala a povestii
-- Contextul medical este mai prezent: Dr. Martinez lucreaza in medical center
-- Pattern-uri complexe indica medicina ca fiind categoria dominanta
-- Predictia este corecta, dar increderea de 100% este doar un placeholder
-
-**Random Forest (32% incredere - extrem de scazuta)**:
-- Analizeaza interactiuni complexe si contextul
-- Identifica medicina ca fiind tema centrala (Dr. Martinez, medical center, patient care)
-- **Increderea extrem de scazuta (32%) indica ambiguitate maxima**
-- Distributia probabilitatilor: 32% medicina, 23% sport, 21% tehnologie - **foarte echilibrata, aproape random**
-- Acest lucru confirma ca articolul nu are o categorie clara
-
-**Observatii critice:**
-
-1. **Incredere extrem de scazuta pentru toate algoritmii**:
-   - Naive Bayes: 47.06% (foarte scazut)
-   - Random Forest: 32% (extrem de scazut, aproape random)
-   - Acest lucru confirma ca articolul este extrem de ambiguu
-
-2. **Discrepanta clara intre algoritmi**:
-   - Naive Bayes: Spatiu (bazat pe claritatea combinatiilor de cuvinte)
-   - SVM si Random Forest: Medicina (bazat pe tema centrala si context)
-
-3. **Distributia probabilitatilor foarte echilibrata**:
-   - Naive Bayes: 47.1% spatiu, 34.0% medicina, 9.9% tehnologie
-   - Random Forest: 32% medicina, 23% sport, 21% tehnologie
-   - **Aceasta distributie echilibrata confirma ca articolul mentioneaza toate categoriile in mod egal**
-
-4. **Comparatie cu articolul 1**:
-   - Articol 1 (clar): Naive Bayes 99.74%, Random Forest 97%
-   - Articol 3 (ambiguu): Naive Bayes 47.06%, Random Forest 32%
-   - **Diferenta de incredere confirma ambiguitatea**
-
-**Concluzie Articol 3:**
-- Articolul este extrem de ambiguu - mentioneaza toate categoriile in mod egal
-- **Increderea scazuta confirma ambiguitatea** - algoritmii nu sunt siguri
-- Diferentele apar din abordarile diferite:
-  - **Naive Bayes**: Se bazeaza pe claritatea combinatiilor de cuvinte (spatiu are combinatii mai clare)
-  - **SVM si Random Forest**: Identifica tema centrala (medicina este tema povestii)
-- Distributia echilibrata a probabilitatilor confirma ca articolul nu are o categorie clara
+**Rezumat:** Articolul mentioneaza toate categoriile in mod egal. Naive Bayes identifica spatiu (combinatii clare), iar SVM si Random Forest identifica medicina (tema centrala). Diferentele apar din abordarile diferite ale algoritmilor.
 
 ---
 
